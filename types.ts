@@ -34,8 +34,9 @@ export interface TutorResponse {
   title: string;
   summary: string;
   content_blocks: ContentBlock[];
-  extra: Extras;
+  extra?: Extras;  // make this optional
 }
+
 
 export enum InteractionMode {
   Explain = 'Explain',
