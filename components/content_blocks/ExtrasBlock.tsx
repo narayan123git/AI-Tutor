@@ -3,10 +3,11 @@ import React from 'react';
 import { Extras } from '../../types';
 
 interface ExtrasBlockProps {
-  extra: Extras;
+  extra?: Extras;  // optional now
 }
 
-const ExtrasBlock: React.FC<ExtrasBlockProps> = ({ extra }) => {
+
+const ExtrasBlock: React.FC<ExtrasBlockProps> = ({ extra = {} }) => {
   const hasContent = extra.exam_tips?.length || extra.common_mistakes?.length || extra.real_world_applications?.length;
 
   if (!hasContent) {
