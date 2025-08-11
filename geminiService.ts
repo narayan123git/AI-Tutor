@@ -1,31 +1,42 @@
 // services/tutorService.ts
 import { InteractionMode, TutorResponse } from "../types";
 
-export const getTutorResponse = async (
-  userInput: string,
-  mode: InteractionMode
-): Promise<TutorResponse> => {
+export const getTutorResponse = async (userInput: string, mode: InteractionMode): Promise<TutorResponse> => {
   try {
-    const response = await fetch("/api/tutor", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, topic: userInput }),
+    const prompt = `Mode: ${mode}\nTopic: ${userInput}`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: "application/json",
+        responseSchema,
+      },
     });
 
-    if (!response.ok) {
-      throw new Error(`Backend error: ${response.statusText}`);
+    let jsonText = response.text.trim();
+
+    // Remove markdown code fences if present
+    if (jsonText.startsWith("```")) {
+      jsonText = jsonText.replace(/```[a-z]*\n?/, "").replace(/```$/, "");
     }
 
-    const data = await response.json();
+    // Fix common trailing commas to avoid JSON parse errors
+    jsonText = jsonText.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
 
-    // Validation
+    const data = JSON.parse(jsonText);
+
+    // Basic validation
     if (!data.title || !data.summary || !Array.isArray(data.content_blocks)) {
       throw new Error("Invalid response format from AI.");
     }
 
     return data as TutorResponse;
+
   } catch (error) {
-    console.error("Error fetching AI response:", error);
-    throw error;
+    console.error("Error fetching or parsing AI response:", error);
+    const err = error as Error;
+    throw new Error(`Failed to get response from AI Tutor. ${err.message}`);
   }
 };
